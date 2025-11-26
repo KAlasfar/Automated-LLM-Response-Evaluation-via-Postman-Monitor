@@ -1,0 +1,549 @@
+{
+	"info": {
+		"_postman_id": "aeab7112-05e2-4f1a-bcbd-35844ff05a3e",
+		"name": "LLM Automated Tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38663480"
+	},
+	"item": [
+		{
+			"name": "Test1_CapitalCity",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let result = pm.response.json();\r",
+							"\r",
+							"// Error handling for primary model\r",
+							"if (!result.choices || !result.choices[0]) {\r",
+							"    console.log(\"Primary model returned invalid response:\", result);\r",
+							"    return pm.test(\"Model Response\", () => {\r",
+							"        pm.expect.fail(\"Primary model returned invalid response\");\r",
+							"    });\r",
+							"}\r",
+							"\r",
+							"let answer = result.choices[0].message.content;\r",
+							"let prompt = \"Which city is the capital of the country where the Eiffel Tower is located?\";\r",
+							"\r",
+							"// LLM evaluator\r",
+							"pm.sendRequest({\r",
+							"    url: \"https://openrouter.ai/api/v1/chat/completions\",\r",
+							"    method: \"POST\",\r",
+							"    header: {\r",
+							"        \"Authorization\": `Bearer ${pm.environment.get(\"OPENROUTER_API_KEY\")}`,\r",
+							"        \"Content-Type\": \"application/json\"\r",
+							"    },\r",
+							"    body: {\r",
+							"        mode: \"raw\",\r",
+							"        raw: JSON.stringify({\r",
+							"            model: \"openrouter/bert-nebulon-alpha\",\r",
+							"            messages: [\r",
+							"                { role: \"system\", content: \"Reply ONLY with CORRECT or WRONG.\" },\r",
+							"                { role: \"user\", content: `Prompt: ${prompt}\\nAnswer: ${answer}` }\r",
+							"            ]\r",
+							"        })\r",
+							"    }\r",
+							"}, (err, res) => {\r",
+							"\r",
+							"    // Error handling evaluator\r",
+							"    if (err) {\r",
+							"        console.log(\"Evaluator Error:\", err);\r",
+							"        return pm.test(\"Evaluation Result\", () => {\r",
+							"            pm.expect.fail(\"Evaluator failed due to API error\");\r",
+							"        });\r",
+							"    }\r",
+							"\r",
+							"    if (!res.json() || !res.json().choices) {\r",
+							"        console.log(\"Evaluator invalid response:\", res);\r",
+							"        return pm.test(\"Evaluation Result\", () => {\r",
+							"            pm.expect.fail(\"Evaluator returned invalid response\");\r",
+							"        });\r",
+							"    }\r",
+							"\r",
+							"    let judge = res.json().choices[0].message.content.trim();\r",
+							"\r",
+							"    console.log(\"Prompt:\", prompt);\r",
+							"    console.log(\"Answer:\", answer);\r",
+							"    console.log(\"Evaluation:\", judge);\r",
+							"\r",
+							"    pm.test(\"Evaluation Result\", function () {\r",
+							"        pm.expect(judge).to.be.oneOf([\"CORRECT\", \"WRONG\"]);\r",
+							"    });\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{OPENROUTER_API_KEY}}\n",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": " Bearer {{OPENROUTER_API_KEY}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": " application/json",
+						"type": "text"
+					},
+					{
+						"key": "HTTP-Referer",
+						"value": " http://localhost",
+						"type": "text"
+					},
+					{
+						"key": "X-Title",
+						"value": " Postman-Test",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"model\": \"openrouter/bert-nebulon-alpha\",\r\n  \"messages\": [\r\n    {\r\n      \"role\": \"user\",\r\n      \"content\": \"Which city is the capital of the country where the Eiffel Tower is located?\"\r\n    }\r\n  ]\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://openrouter.ai/api/v1/chat/completions",
+					"protocol": "https",
+					"host": [
+						"openrouter",
+						"ai"
+					],
+					"path": [
+						"api",
+						"v1",
+						"chat",
+						"completions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test2_AnimalCat",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let result = pm.response.json();\r",
+							"\r",
+							"if (!result.choices || !result.choices[0]) {\r",
+							"    console.log(\"Primary model returned invalid response:\", result);\r",
+							"    return pm.test(\"Model Response\", () => {\r",
+							"        pm.expect.fail(\"Primary model returned invalid response\");\r",
+							"    });\r",
+							"}\r",
+							"\r",
+							"let answer = result.choices[0].message.content;\r",
+							"let prompt = \"Tell me a story of an animal that has ears in shape of a triangle and does meow.\";\r",
+							"\r",
+							"pm.sendRequest({\r",
+							"    url: \"https://openrouter.ai/api/v1/chat/completions\",\r",
+							"    method: \"POST\",\r",
+							"    header: {\r",
+							"        \"Authorization\": `Bearer ${pm.environment.get(\"OPENROUTER_API_KEY\")}`,\r",
+							"        \"Content-Type\": \"application/json\"\r",
+							"    },\r",
+							"    body: {\r",
+							"        mode: \"raw\",\r",
+							"        raw: JSON.stringify({\r",
+							"            model: \"openrouter/bert-nebulon-alpha\",\r",
+							"            messages: [\r",
+							"                { role: \"system\", content: \"Reply ONLY with CORRECT or WRONG.\" },\r",
+							"                { role: \"user\", content: `Prompt: ${prompt}\\nAnswer: ${answer}` }\r",
+							"            ]\r",
+							"        })\r",
+							"    }\r",
+							"}, (err, res) => {\r",
+							"\r",
+							"    if (err) {\r",
+							"        console.log(\"Evaluator Error:\", err);\r",
+							"        return pm.test(\"Evaluation Result\", () => {\r",
+							"            pm.expect.fail(\"Evaluator failed due to API error\");\r",
+							"        });\r",
+							"    }\r",
+							"\r",
+							"    if (!res.json() || !res.json().choices) {\r",
+							"        console.log(\"Evaluator invalid response:\", res);\r",
+							"        return pm.test(\"Evaluation Result\", () => {\r",
+							"            pm.expect.fail(\"Evaluator returned invalid response\");\r",
+							"        });\r",
+							"    }\r",
+							"\r",
+							"    let judge = res.json().choices[0].message.content.trim();\r",
+							"\r",
+							"    console.log(\"Prompt:\", prompt);\r",
+							"    console.log(\"Answer:\", answer);\r",
+							"    console.log(\"Evaluation:\", judge);\r",
+							"\r",
+							"    pm.test(\"Evaluation Result\", function () {\r",
+							"        pm.expect(judge).to.be.oneOf([\"CORRECT\", \"WRONG\"]);\r",
+							"    });\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": " Bearer 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",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": " application/json",
+						"type": "text"
+					},
+					{
+						"key": "HTTP-Referer",
+						"value": " http://localhost",
+						"type": "text"
+					},
+					{
+						"key": "X-Title",
+						"value": " Postman-Test",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"model\": \"openrouter/bert-nebulon-alpha\",\r\n  \"messages\": [\r\n    {\r\n      \"role\": \"user\",\r\n      \"content\": \"Tell me a story of an animal that has ears in shape of a triangle and does meow.\"\r\n    }\r\n  ]\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://openrouter.ai/api/v1/chat/completions",
+					"protocol": "https",
+					"host": [
+						"openrouter",
+						"ai"
+					],
+					"path": [
+						"api",
+						"v1",
+						"chat",
+						"completions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test3_Weekdays",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let result = pm.response.json();\r",
+							"\r",
+							"if (!result.choices || !result.choices[0]) {\r",
+							"    console.log(\"Primary model returned invalid response:\", result);\r",
+							"    return pm.test(\"Model Response\", () => {\r",
+							"        pm.expect.fail(\"Primary model returned invalid response\");\r",
+							"    });\r",
+							"}\r",
+							"\r",
+							"let answer = result.choices[0].message.content;\r",
+							"let prompt = \"How many days are in a week?\";\r",
+							"\r",
+							"pm.sendRequest({\r",
+							"    url: \"https://openrouter.ai/api/v1/chat/completions\",\r",
+							"    method: \"POST\",\r",
+							"    header: {\r",
+							"        \"Authorization\": `Bearer ${pm.environment.get(\"OPENROUTER_API_KEY\")}`,\r",
+							"        \"Content-Type\": \"application/json\"\r",
+							"    },\r",
+							"    body: {\r",
+							"        mode: \"raw\",\r",
+							"        raw: JSON.stringify({\r",
+							"            model: \"openrouter/bert-nebulon-alpha\",\r",
+							"            messages: [\r",
+							"                { role: \"system\", content: \"Reply ONLY with CORRECT or WRONG.\" },\r",
+							"                { role: \"user\", content: `Prompt: ${prompt}\\nAnswer: ${answer}` }\r",
+							"            ]\r",
+							"        })\r",
+							"    }\r",
+							"}, (err, res) => {\r",
+							"\r",
+							"    if (err) {\r",
+							"        console.log(\"Evaluator Error:\", err);\r",
+							"        return pm.test(\"Evaluation Result\", () => {\r",
+							"            pm.expect.fail(\"Evaluator failed due to API error\");\r",
+							"        });\r",
+							"    }\r",
+							"\r",
+							"    if (!res.json() || !res.json().choices) {\r",
+							"        console.log(\"Evaluator invalid response:\", res);\r",
+							"        return pm.test(\"Evaluation Result\", () => {\r",
+							"            pm.expect.fail(\"Evaluator returned invalid response\");\r",
+							"        });\r",
+							"    }\r",
+							"\r",
+							"    let judge = res.json().choices[0].message.content.trim();\r",
+							"\r",
+							"    console.log(\"Prompt:\", prompt);\r",
+							"    console.log(\"Answer:\", answer);\r",
+							"    console.log(\"Evaluation:\", judge);\r",
+							"\r",
+							"    pm.test(\"Evaluation Result\", function () {\r",
+							"        pm.expect(judge).to.be.oneOf([\"CORRECT\", \"WRONG\"]);\r",
+							"    });\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": " Bearer {{OPENROUTER_API_KEY}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": " application/json",
+						"type": "text"
+					},
+					{
+						"key": "HTTP-Referer",
+						"value": " http://localhost",
+						"type": "text"
+					},
+					{
+						"key": "X-Title",
+						"value": " Postman-Test",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"model\": \"openrouter/bert-nebulon-alpha\",\r\n  \"messages\": [\r\n    {\r\n      \"role\": \"user\",\r\n      \"content\": \"How many days are in a week?\"\r\n    }\r\n  ]\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://openrouter.ai/api/v1/chat/completions",
+					"protocol": "https",
+					"host": [
+						"openrouter",
+						"ai"
+					],
+					"path": [
+						"api",
+						"v1",
+						"chat",
+						"completions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test4_Photosynthesis",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let result = pm.response.json();\r",
+							"\r",
+							"if (!result.choices || !result.choices[0]) {\r",
+							"    console.log(\"Primary model returned invalid response:\", result);\r",
+							"    return pm.test(\"Model Response\", () => {\r",
+							"        pm.expect.fail(\"Primary model returned invalid response\");\r",
+							"    });\r",
+							"}\r",
+							"\r",
+							"let answer = result.choices[0].message.content;\r",
+							"let prompt = \"What gas do plants release during photosynthesis?\";\r",
+							"\r",
+							"pm.sendRequest({\r",
+							"    url: \"https://openrouter.ai/api/v1/chat/completions\",\r",
+							"    method: \"POST\",\r",
+							"    header: {\r",
+							"        \"Authorization\": `Bearer ${pm.environment.get(\"OPENROUTER_API_KEY\")}`,\r",
+							"        \"Content-Type\": \"application/json\"\r",
+							"    },\r",
+							"    body: {\r",
+							"        mode: \"raw\",\r",
+							"        raw: JSON.stringify({\r",
+							"            model: \"openrouter/bert-nebulon-alpha\",\r",
+							"            messages: [\r",
+							"                { role: \"system\", content: \"Reply ONLY with CORRECT or WRONG.\" },\r",
+							"                { role: \"user\", content: `Prompt: ${prompt}\\nAnswer: ${answer}` }\r",
+							"            ]\r",
+							"        })\r",
+							"    }\r",
+							"}, (err, res) => {\r",
+							"\r",
+							"    if (err) {\r",
+							"        console.log(\"Evaluator Error:\", err);\r",
+							"        return pm.test(\"Evaluation Result\", () => {\r",
+							"            pm.expect.fail(\"Evaluator failed due to API error\");\r",
+							"        });\r",
+							"    }\r",
+							"\r",
+							"    if (!res.json() || !res.json().choices) {\r",
+							"        console.log(\"Evaluator invalid response:\", res);\r",
+							"        return pm.test(\"Evaluation Result\", () => {\r",
+							"            pm.expect.fail(\"Evaluator returned invalid response\");\r",
+							"        });\r",
+							"    }\r",
+							"\r",
+							"    let judge = res.json().choices[0].message.content.trim();\r",
+							"\r",
+							"    console.log(\"Prompt:\", prompt);\r",
+							"    console.log(\"Answer:\", answer);\r",
+							"    console.log(\"Evaluation:\", judge);\r",
+							"\r",
+							"    pm.test(\"Evaluation Result\", function () {\r",
+							"        pm.expect(judge).to.be.oneOf([\"CORRECT\", \"WRONG\"]);\r",
+							"    });\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": " Bearer {{OPENROUTER_API_KEY}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": " application/json",
+						"type": "text"
+					},
+					{
+						"key": "HTTP-Referer",
+						"value": " http://localhost",
+						"type": "text"
+					},
+					{
+						"key": "X-Title",
+						"value": " Postman-Test",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"model\": \"openrouter/bert-nebulon-alpha\",\r\n  \"messages\": [\r\n    {\r\n      \"role\": \"user\",\r\n      \"content\": \"What gas do plants release during photosynthesis?\"\r\n    }\r\n  ]\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://openrouter.ai/api/v1/chat/completions",
+					"protocol": "https",
+					"host": [
+						"openrouter",
+						"ai"
+					],
+					"path": [
+						"api",
+						"v1",
+						"chat",
+						"completions"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
